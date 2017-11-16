@@ -2,7 +2,6 @@ import datetime
 import math
 import calendar
 import sys
-import timeit
 from django.utils import timezone
 from .gen_cal import get_project_context
 from .gen_cal import get_project_tasks
@@ -25,38 +24,23 @@ from .models import Staff, Department, Project, Task, Stream
 
 
 def index(request):
-	start_time = timeit.default_timer()
 	try:
 		cal_setting = request.POST['cal_setting']
 	except KeyError:
 		cal_setting = 'this_week'
 	else:
 		cal_setting = request.POST['cal_setting']
-	print('CAL SETTING: ' + str(timeit.default_timer() - start_time))
 	
-	dashboard = dashboard_context(show_empty = True, group_dash = 'department')
-	print('DASHBOARD: ' + str(timeit.default_timer() - start_time))
-	alt_cal = calendar_context(start = cal_setting, days_in_line = 35, num_lines = 2, obj = False, obj_id = False, group = 'department', row = 'staff', show_empty = True)
-	print('CALENDAR: ' + str(timeit.default_timer() - start_time))
-	staff_list = Department.objects.all()
-	project_list = Stream.objects.all()
-	print('LISTS: ' + str(timeit.default_timer() - start_time))
-	project_cal = project_calendar_context(start = datetime.date.today().replace(month = 1, day = 1))
-	print('OVERVIEW: ' + str(timeit.default_timer() - start_time))
-
 	context = {'today': datetime.date.today(), 
-				'dashboard': dashboard, 
-				'alt_cal': alt_cal, 
-				'staff_list' : staff_list, 
-				'project_list': project_list, 
+				'dashboard': dashboard_context(show_empty = True, group_dash = 'department'), 
+				'alt_cal': calendar_context(start = cal_setting, days_in_line = 35, num_lines = 2, obj = False, obj_id = False, group = 'department', row = 'staff', show_empty = True), 
+				'staff_list' : Department.objects.all(), 
+				'project_list': Stream.objects.all(), 
 				'cal_setting': cal_setting, 
-				'project_cal': project_cal,}
-	print('INDEX: ')
-	print(timeit.default_timer() - start_time)
+				'project_cal': project_calendar_context(start = datetime.date.today().replace(month = 1, day = 1)),}
 	return render(request, 'plan/index.html', context)
 
 def project(request, project_id, time):
-	start_time = timeit.default_timer()
 	project_task_dates()
 	try:
 		project = Project.objects.get(pk=project_id)
@@ -79,8 +63,6 @@ def project(request, project_id, time):
 					'project_list': Stream.objects.all(), 
 					'cal_setting': cal_setting,
 					'calendar': calendar_context(start = 'all', num_lines = 1, obj = project, obj_id = project.id, group = 'department', row = 'task', show_empty = False, project = project),}
-		print('PROJECT: ')
-		print(timeit.default_timer() - start_time)
 		return render(request, 'plan/project.html', context)
 
 def old_project(request, project_id, time):
@@ -128,7 +110,6 @@ def task(request, task_id, time):
 	return render(request, 'plan/task.html', context)
 
 def staff(request, staff_id):
-	start_time = timeit.default_timer()
 	staff = Staff.objects.get(pk = staff_id)
 	if len(Task.objects.filter(active=True, staff_id = staff_id)) > 0:
 		s = SetCal(datetime.date.today())
@@ -160,8 +141,6 @@ def staff(request, staff_id):
 	else:
 		context = {'today': datetime.date.today(), 'staff_list' : Department.objects.all(), 'project_list': Stream.objects.all(), 'staff': staff, }
 
-	print('STAFF: ')
-	print(timeit.default_timer() - start_time)
 	return render(request, 'plan/staff.html', context)
 
 def create_project(request):

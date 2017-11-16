@@ -1,7 +1,6 @@
 import datetime
 import math
 import calendar
-import timeit
 import numpy as np
 from django.db.models import Count
 from .models import Staff, Department, Project, Task, Stream, Holiday
@@ -452,12 +451,9 @@ def calendar_context(start = 'this_week', days_in_line = False, num_lines = Fals
 
 #function that retreives project and filters them by dates & by other inputs
 def get_projects(current = False, start = False, end = False, start_in = False, end_after = False, deadline = False, staff = False, project = False, task = False, department = False, stream = False,  active = True, sort = 'start'):
-    st_time = timeit.default_timer()
-    print('GET_PROJECT_START: ' + str(timeit.default_timer() - st_time))
     today = datetime.date.today()
     #updating start and end dates of project based on the available tasks
     #project_task_dates()
-    print('GET_PROJECT_DATES: ' + str(timeit.default_timer() - st_time))
 
     #retreiving projects && applying 'active' filter if parameter is wrong default to True
     if type(active) == bool : data = Project.objects.filter(active=active)
@@ -487,13 +483,11 @@ def get_projects(current = False, start = False, end = False, start_in = False, 
     if type(deadline) == datetime.date and not current and not start and not end:
         data = data.filter(end_date__gte = deadline).filter(end_date__lte = deadline + 9 * datetime.timedelta(days=1))
 
-    print('GET_PROJECT_TIME: ' + str(timeit.default_timer() - st_time))
-
     #applying stream filter if it exists
     if stream and type(stream) == int:
         try:
             s = Stream.objects.get(id=stream)
-            data = data.filter(stream = s)
+            data = data.filter(stream_id = stream)
         except (KeyError):
             print ('Stream ID error in get_projects function')
 
@@ -509,7 +503,7 @@ def get_projects(current = False, start = False, end = False, start_in = False, 
     if staff and type(staff) == int:
         try:
             s = Staff.objects.get(id=staff)
-            data = data.filter(task__staff = s).distinct()
+            data = data.filter(task__staff_id = staff).distinct()
         except (KeyError):
             print ('Staff ID error in get_projects function')
 
@@ -517,7 +511,7 @@ def get_projects(current = False, start = False, end = False, start_in = False, 
     if department and type(department) == int:
         try:
             s = Department.objects.get(id=department)
-            data = data.filter(task__staff__dep = s).distinct()
+            data = data.filter(task__staff__dep_id = department).distinct()
         except (KeyError):
             print ('Department ID error in get_projects function')
 
@@ -529,15 +523,12 @@ def get_projects(current = False, start = False, end = False, start_in = False, 
         except (KeyError):
             print ('Task ID error in get_tasks function')
 
-    print('GET_PROJECT_SORT: ' + str(timeit.default_timer() - st_time))
-
     #sorting
     if sort == 'start':
         data = data.order_by('start_date')
     elif sort == 'end':
         data = data.order_by('end_date')
 
-    print('GET_PROJECT_END: ' + str(timeit.default_timer() - st_time))
     return data
 
 #function that creates dot product of project matrix and adds a bottom row with project number for easier identification later
@@ -672,8 +663,6 @@ def project_calendar_context(start = False, group = 'stream', months = 18, staff
 #function that creates all necessary content for dashboards
 #!!!! IT SHOULD BE MODIFIED TO INCLUDE DATA FOR DASHBOARD FOR STAFF & PROJECTS
 def dashboard_context(project = False, staff = False, obj = False, obj_id = False, show_empty = True, group_dash = 'stream', row='staff'):
-    st_time = timeit.default_timer()
-    
     today = datetime.date.today()
     d = datetime.timedelta(days = 1)
     if group_dash not in ['stream', 'department', False] : group_dash = 'stream'
@@ -685,44 +674,33 @@ def dashboard_context(project = False, staff = False, obj = False, obj_id = Fals
     next_week = []
     deadlines = []
     upcoming = []
-    print('DASH_CAL: ' + str(timeit.default_timer() - st_time))
 
     if group_dash == 'stream':
         for stream in Stream.objects.all():
             if not project and not staff:
                 this_week.append({'stream': stream, 'projects': get_projects(start = week_start(today), end = week_end(today), stream = stream.id)})
-                print('DASH_THIS_WEEK: ' + str(timeit.default_timer() - st_time))
                 next_week.append({'stream': stream, 'projects': get_projects(start_in = {'start': week_start(week_start(today + 7 * d)), 'end': week_end(week_start(today + 7 * d))}, stream = stream.id)})
-                print('DASH_NEXT_WEEK: ' + str(timeit.default_timer() - st_time))
             elif project:
                 this_week.append({'stream': stream, 'projects': get_tasks(project = project, stream = stream.id)})
             elif staff:
                 this_week.append({'stream': stream, 'projects': get_tasks(start = week_start(today), end = week_end(today), staff = staff, stream = stream.id)})
                 next_week.append({'stream': stream, 'projects': get_tasks(start_in = {'start': week_start(week_start(today + 7 * d)), 'end': week_end(week_start(today + 7 * d))}, staff = staff, stream = stream.id)})
-            print('DASH_THIS_NEXT: ' + str(timeit.default_timer() - st_time))
             deadlines.append({'stream': stream, 'tasks': get_tasks(project = project, staff = staff, deadline = week_start(today), sort='end', stream = stream.id)})
             upcoming.append({'stream': stream, 'tasks': get_tasks(project = project, staff = staff, start_in = {'start': today, 'end': today + 9 * d}, sort='start', stream = stream.id)})
-            print('DASH_DEAD_UP: ' + str(timeit.default_timer() - st_time))
 
     elif group_dash == 'department':
         for dep in Department.objects.all():
             if not project and not staff:
                 this_week.append({'stream': dep, 'projects': get_projects(start = week_start(today), end = week_end(today), department = dep.id)})
-                print('DASH_THIS_WEEK: ' + str(timeit.default_timer() - st_time))
                 next_week.append({'stream': dep, 'projects': get_projects(start_in = {'start': week_start(week_start(today + 7 * d)), 'end': week_end(week_start(today + 7 * d))}, department = dep.id)})
-                print('DASH_NEXT_WEEK: ' + str(timeit.default_timer() - st_time))
             elif project:
                 this_week.append({'stream': dep, 'projects': get_tasks(project = project, department = dep.id)})
             elif staff:
                 this_week.append({'stream': dep, 'projects': get_tasks(start = week_start(today), end = week_end(today),staff = staff, department = dep.id)})
                 next_week.append({'stream': dep, 'projects': get_tasks(start_in = {'start': week_start(week_start(today + 7 * d)), 'end': week_end(week_start(today + 7 * d))}, staff = staff, department = dep.id)})
-            print('DASH_THIS_NEXT: ' + str(timeit.default_timer() - st_time))
             deadlines.append({'stream': dep, 'tasks': get_tasks(project = project, staff = staff, deadline = week_start(today), sort='end', department = dep.id)})
             upcoming.append({'stream': dep, 'tasks': get_tasks(project = project, staff = staff, start_in = {'start': today, 'end': today + 9 * d}, sort='start', department = dep.id)})
-            print('DASH_DEAD_UP: ' + str(timeit.default_timer() - st_time))
 
-    print('DASH_OTHER: ' + str(timeit.default_timer() - st_time))
-    
     context['projects_this_week'] = this_week
     context['projects_next_week'] = next_week
     context['deadlines'] = deadlines
@@ -735,7 +713,6 @@ def dashboard_context(project = False, staff = False, obj = False, obj_id = Fals
         context['height'] = max(context['tasks'][0]['dimensions']['height'], 
             22 + len(context['projects_this_week']) * 22 + sum([len(section['projects']) for section in context['projects_this_week']]) * 28, 
             86 + len(context['deadlines']) * 22 + sum([len(section['tasks']) for section in context['deadlines']]) * 42 + len(context['upcoming']) * 22 + sum([len(section['tasks']) for section in context['upcoming']]) * 42) + 10
-    print('DASH_END: ' + str(timeit.default_timer() - st_time))
 
     return context
 
