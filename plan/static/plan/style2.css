@@ -1,0 +1,111 @@
+
+.cell {
+	border-radius: 5px;
+    border-right: 1px solid #FBF9F8;
+    border-left: 1px solid #FBF9F8;
+    box-sizing: border-box;
+}
+.row_tall {
+	height: 40px;
+	line-height: 40px;
+}
+.hidden_cal_task_info {
+	top: 30px;
+    border-radius: 5px;
+    border: none;
+    box-shadow: -1.5px 2px 6px #5a5858;
+}
+
+.row_short {
+	height: 18px;
+}
+.staff_row_title {
+	width: 100%;
+    height: 26px;
+    line-height: 26px;
+    padding: 0 5px;
+    box-sizing: border-box;
+    border-radius: 5px;
+    border-right: 1px solid #FBF9F8;
+    border-left: 1px solid #FBF9F8;
+}
+.staff_row_title:hover {
+	text-decoration: none;
+	color: white;
+	background-color: #352d3d;
+	font-family: 'LatoWeb';
+	border-right: 1px solid #352d3d;
+    border-left: 1px solid #352d3d;
+}
+.task_title_box {
+	height: 100%;
+	line-height: 26px;
+    box-sizing: border-box;
+    padding: 0 0;
+}
+.task_title_box:hover {
+	font-weight: bold;
+	color: white;
+}
+.task_row_title {
+	width: 40%; 
+	overflow: hidden;
+	height: 100%;
+    line-height: 40px;
+    width: 40%;
+    overflow: hidden;
+}
+.double_row_task {
+	float: left;
+	height: 100%;
+	width: 40%; 
+	overflow: hidden;
+	border-right: 1px solid #FBF9F8;
+    border-left: 1px solid #FBF9F8;
+    box-sizing: border-box;
+}
+.project_row_task {
+	height: 20px;
+    line-height: 20px;
+    padding: 0 5px;
+    width: 100%;
+    overflow: hidden;
+}
+.task_row_dates {
+	float: left;
+    width: 20%;
+    height: 40px;
+    padding: 0 5px;
+    box-sizing: border-box;
+    border-radius: 5px;
+    border-right: 1px solid #FBF9F8;
+    border-left: 1px solid #FBF9F8;
+    overflow: hidden;
+    cursor: default;
+}
+.rows_dashboard_wrapper {
+	width: 20%;
+	box-shadow: 0px 0.5px 1.5px rgba(0,0,0,0.5);
+    border-radius: 3px;
+    box-sizing: border-box;
+    padding: 0 3px 2px 3px;
+    background-color: rgba(245, 245, 245, 1);
+}
+.rows_dashboard_wrapper_projects {
+	width: 30%; 
+	margin-left: 2%;
+	box-shadow: 0px 0.5px 1.5px rgba(0,0,0,0.5);
+    border-radius: 3px;
+    box-sizing: border-box;
+    padding: 0 3px 2px 3px;
+    background-color: rgba(245, 245, 245, 0.2);
+}
+.cell_dash {width: 14.28%;}
+.cell_1_dash {width: 14.28%;}
+.cell_2_dash {width: 28.56%;}
+.cell_3_dash {width: 42.84%;}
+.cell_4_dash {width: 57.12%;}
+.cell_5_dash {width: 71.40%;}
+.cell_6_dash {width: 85.68%;}
+.cell_7_dash {width: 100.00%;}
+

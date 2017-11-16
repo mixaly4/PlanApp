@@ -1,0 +1,436 @@
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'plan/style.css' %}"/>
+<link rel="stylesheet" type="text/css" href="{% static 'plan/style2.css' %}"/>
+<div class="header">
+	<div class="header_logo">
+		<a href="{% url 'plan:index' %}"><img class="logo" src="{% static 'plan/images/logo_uma.png' %}"/></a>
+		<div class="logo_text bold">Planning</div>
+	</div>
+	<div class="header_logo header_menu">
+		<div class="header_title regular">Projects</div>
+		<ul class="header_dropbox">
+			{% if project_list %}
+				{% for stream in project_list %}
+					<li class="header_dropbox_titlerow regular">{{ stream.name }}</li>
+					{% for project in stream.projects %}
+						<a href="{% url 'plan:project' project.id 0 %}"><li class="header_dropbox_row">{{ project.name }}</li></a>
+					{% endfor %}
+				{% endfor %}
+			{% endif %}
+		</ul>
+	</div>
+	<div class="header_logo header_menu" style="margin-right: 70px;">
+		<div class="header_title regular">Staff</div>
+		<ul class="header_dropbox">
+			{% if staff_list %}
+				{% for dep in staff_list %}
+					<li class="header_dropbox_titlerow regular">{{ dep.name }}</li>
+					{% for staff in dep.staff %}
+						<a href="{% url 'plan:staff' staff.id %}"><li class="header_dropbox_row">{{ staff.name }}</li></a>
+					{% endfor %}
+				{% endfor %}
+			{% endif %}
+		</ul>
+	</div>
+	<a href="{% url 'plan:create_project' %}">
+		<div class="header_logo header_menu header_create">
+			<div class="header_title regular">Create Project</div>
+		</div>
+	</a>
+	<a href="{% url 'plan:create_task' 0 0 %}">
+		<div class="header_logo header_menu header_create" style="margin-right: 70px;">
+			<div class="header_title regular">Create Task</div>
+		</div>
+	</a>
+	<div class="header_logo header_date">
+		<div class="logo_text bold">{{ today|date:"j F Y" }}</div>
+	</div>
+</div>
+<div class="page_object_header" style="border-color: #0000e5;">
+	<h3 class="bold page_object_header_section">{{ staff.dep.name }}</h3>
+	<h1 class="bold page_object_header_section">{{ staff.name }}</h1>
+	<h3 class="bold page_object_header_section" style="font-size: 15px;">Active projects: {{ staff.projects.num_projects }}</h3>
+</div>
+<div class="header object_page_header">
+	<a href="{% url 'plan:create_task' 0 staff.id %}">
+		<div class="header_logo header_create" style="width: 150px; margin-right: 15px;">
+			<div class="header_title">Create new task</div>
+		</div>
+	</a>
+</div>
+<h3 style="margin-bottom: 0;">Dashboard</h3>
+<div class="calendar_outer_wrapper" style="height: {{ dashboard.height }}px;">
+	<div class="calendar_inner_wrapper">
+		<div class="rows_wrapper rows_dashboard_wrapper" style="width: 35%;">
+			<div class="row_title_wrapper" style="width: 40%;">
+				<ul>
+					<li class="row_basic row_short" style="background-color: none;"></li>
+					<li class="row_basic row_short" style="background-color: none;"></li>
+					<li class="row_basic" style="height: 15px; font-size: 10px !important; background-color: none;"></li>
+					{% for cal in dashboard.tasks.0.calendar %}
+						<li class="row_basic row_depart bold"><a href=#>{{ cal.section.name }}</a></li>
+						{% for row in cal.rows %}
+							<li class="row_basic"><a href="{% url 'plan:staff' row.object.id %}"><div class="staff_row_title">{{ row.object.name }}</div></a></li>
+						{% endfor %}
+					{% endfor %}
+				</ul>
+			</div>
+			<div class="rows_wrapper" style="width: 60%;">
+				<ul>
+					<li class="row_basic row_short">
+					{% for m in dashboard.tasks.0.header.month %}
+						<div class="cell cell_{{ m.num_days }}_dash ">{{ m.date|date:"F"}}</div>
+					{% endfor %}
+					</li>			
+	 				<li class="row_basic row_short">
+	 				{% for d in dashboard.tasks.0.header.dates %}
+	 					<div class="cell cell_dash {% if d.weekday > 4 %}end_week{% endif %}">{{ d.day }}</div>
+	 				{% endfor %}
+					</li>
+					<li class="row_basic" style="height: 15px; font-size: 10px !important;">
+					{% for d in dashboard.tasks.0.header.dates %}
+	 					<div class="cell cell_dash {% if d.weekday > 4 %}end_week{% endif %}">{{ d|date:"D"}}</div>
+	 				{% endfor %}
+					</li>
+					{% for cal in dashboard.tasks.0.calendar %}
+						<li class="row_basic row_depart"></li>
+						{% for row in cal.rows %}
+							<li class="row_basic">
+								{% for ent in row.entries %}
+									{% if ent.fill %}
+										{% if 0 not in ent.objects %}
+											{% if ent.multi %}
+											<div onclick="vistoggle(this)" class="cell cell_{{ ent.num_days }}_dash cell_active cell_red">
+												<p class="task_title_box">{{ ent.multi }} tasks. Click</p>
+												<div class="hidden_cal_task_info">
+												{% for obj in ent.objects %}
+													<div class="cal_task_info">
+														<a href="{% url 'plan:task' obj.id 0 %}"><div class="bold hidden_cal_task_info_line" style="padding: 0 4px;">{{ obj.name }}</div></a>
+														<a href="{% url 'plan:project' obj.project.id 0 %}"><div class="regular hidden_cal_task_info_line" style="font-size: 12px; padding: 2px 4px 0 4px;">{{ obj.project.name }}</div></a>
+														<div class="light" style="font-size: 11px; padding: 3px 4px 0 4px;">{{ obj.start_date|date:"j M" }} - {{ obj.end_date|date:"j M" }}</div>
+														{% if obj.comment %}
+															<div class="light" style="font-size: 11px; padding: 2px 4px 2px 4px;">{{ obj.comment }}</div>
+														{% else %}
+															<div class="light" style="font-size: 11px; padding: 2px 4px 2px 4px;">No comments</div>
+														{% endif %}
+													</div>
+												{% endfor %}
+												</div>
+											</div>
+											{% else %}
+												<div onclick="vistoggle(this)" class="cell cell_{{ ent.num_days }}_dash cell_active">
+													<p class="task_title_box">{{ ent.objects.0.name }}</p>
+													<div class="hidden_cal_task_info">
+														<div class="cal_task_info">
+															<a href="{% url 'plan:task' ent.objects.0.id 0 %}"><div class="bold hidden_cal_task_info_line" style="padding: 0 4px;">{{ ent.objects.0.name }}</div></a>
+															<a href="{% url 'plan:project' ent.objects.0.project.id 0 %}"><div class="regular hidden_cal_task_info_line" style="font-size: 12px; padding: 2px 4px 0 4px;">{{ ent.objects.0.project.name }}</div></a>
+															<div class="light" style="font-size: 11px; padding: 3px 4px 0 4px;">{{ ent.objects.0.start_date|date:"j M" }} - {{ ent.objects.0.end_date|date:"j M" }}</div>
+															{% if ent.objects.0.comment %}
+																<div class="light" style="font-size: 11px; padding: 3px 4px 2px 4px;">{{ ent.objects.0.comment }}</div>
+															{% else %}
+																<div class="light" style="font-size: 11px; padding: 3px 4px 2px 4px;">No comments</div>
+															{% endif %}
+														</div>
+													</div>
+												</div>
+											{% endif %}
+										{% else %}
+											<div class="cell cell_{{ ent.num_days }}_dash end_week"></div>
+										{% endif %}
+									{% else %}
+										<div class="cell cell_dash"></div>
+									{% endif %}
+								{% endfor %}
+							</li>
+						{% endfor %}
+					{% endfor %}	
+				</ul>
+			</div>
+		</div>
+		<div class="rows_wrapper rows_dashboard_wrapper_projects">
+			<ul>
+				<li class="row_basic row_short row_title"><div class="cell cell_7_dash bold">Tasks This week</div></li>
+				{% for strm in dashboard.projects_this_week %}
+					<li class="row_basic row_depart bold"><a href=#>{{ strm.stream.name }}</a></li>
+					{% for prjct in strm.projects %}
+						<li class="row_basic">
+							<a href="{% url 'plan:task' prjct.id 0 %}">
+								<div class="project_row_title" style="width: 40%;">{{ prjct.name }}</div>
+							</a>
+							<a href="{% url 'plan:project' prjct.project.id 0 %}">
+								<div class="project_row_title" style="width: 35%;">{{ prjct.project.name }}</div>
+							</a>
+							<div class="project_row_dates" style="width: 25%;">{{ prjct.start_date.day }} {{ prjct.start_date|date:"b" }} - {{ prjct.end_date.day }} {{ prjct.end_date|date:"b" }}</div>
+						</li>
+					{% endfor %}
+				{% endfor %}
+				<li class="row_basic row_short" style="background: none !important;"></li>
+				<li class="row_basic row_short row_title bold"><div class="cell cell_7_dash">Tasks Starting Next Week</div></li>
+				{% for strm in dashboard.projects_next_week %}
+					<li class="row_basic row_depart bold"><a href=#>{{ strm.stream.name }}</a></li>
+					{% for prjct in strm.projects %}
+						<li class="row_basic">
+							<a href="{% url 'plan:task' prjct.id 0 %}">
+								<div class="project_row_title" style="width: 40%;">{{ prjct.name }}</div>
+							</a>
+							<a href="{% url 'plan:project' prjct.project.id 0 %}">
+								<div class="project_row_title" style="width: 35%;">{{ prjct.project.name }}</div>
+							</a>
+							<div class="project_row_dates" style="width: 25%;">{{ prjct.start_date.day }} {{ prjct.start_date|date:"b" }} - {{ prjct.end_date.day }} {{ prjct.end_date|date:"b" }}</div>
+						</li>
+					{% endfor %}
+				{% endfor %}
+			</ul>
+		</div>
+		<div class="rows_wrapper rows_dashboard_wrapper_projects">
+			<ul>
+				<li class="row_basic row_short row_title bold"><div class="cell cell_7_dash">Next Deadlines</div></li>
+				{% for strm in dashboard.deadlines %}
+				<li class="row_basic row_depart bold"><a href=#>{{ strm.stream.name }}</a></li>
+					{% for tsk in strm.tasks %}
+					<li class="row_basic row_tall">
+						<a href="{% url 'plan:task' tsk.id 0 %}"><div class="task_row_title project_row_title">{{ tsk.name }}</div></a>
+						<div class="double_row_task">
+							<a href="{% url 'plan:project' tsk.project.id 0 %}"><div class="project_row_task project_row_title">{{ tsk.project }}</div></a>
+							<a href="{% url 'plan:staff' tsk.staff.id %}"><div class="project_row_task project_row_title">{{ tsk.staff }}</div></a>
+						</div>
+						<div class="task_row_dates">{{ tsk.end_date|date:"D" }}, {{ tsk.end_date.day }} {{ tsk.end_date|date:"b" }}</div>
+					</li>
+					{% endfor %}
+				{% endfor %}
+				<div class="dashboard_section_description light">Next deadlines are tasks that are scheduled to end in 10 calendar days.</div>
+				<li class="row_basic row_short" style="background: none !important;"></li>
+				<li class="row_basic row_short row_title bold"><div class="cell cell_7_dash">Upcoming Tasks: start date</div></li>
+				{% for strm in dashboard.upcoming %}
+				<li class="row_basic row_depart bold"><a href=#>{{ strm.stream.name }}</a></li>
+					{% for tsk in strm.tasks %}
+					<li class="row_basic row_tall">
+						<a href="{% url 'plan:task' tsk.id 0 %}"><div class="task_row_title project_row_title">{{ tsk.name }}</div></a>
+						<div class="double_row_task">
+							<a href="{% url 'plan:project' tsk.project.id 0 %}"><div class="project_row_task project_row_title">{{ tsk.project }}</div></a>
+							<a href="{% url 'plan:staff' tsk.staff.id %}"><div class="project_row_task project_row_title">{{ tsk.staff }}</div></a>
+						</div>
+						<div class="task_row_dates">{{ tsk.start_date|date:"D" }}, {{ tsk.start_date.day }} {{ tsk.start_date|date:"b" }}</div>
+					</li>
+					{% endfor %}
+				{% endfor %}
+				<div class="dashboard_section_description light">Upcoming are tasks that are scheduled to start in 10 calendar days.</div>
+			</ul>
+		</div>
+
+	</div>
+</div>
+{% if project_cal %}
+<h3 class="section_title">Tasks overview</h3>
+<div class="calendar_outer_wrapper" style="height: {{ project_cal.dimensions.height }}px;">
+	<div class="calendar_inner_wrapper">
+		<div class="rows_wrapper" style="overflow: auto; width: 100%; position: absolute; top: 0; right: 0;">
+			<ul style="width: 100%;">
+				<li class="row_basic"></li>
+				<li class="row_basic"></li>
+				{% for line in project_cal.calendar %}
+					<li class="row_basic" style="background: rgba(53,45,61, 0.2); height: 18px;">
+						<div class="cell bold" style="width: 30%; line-height: 18px; font-size: 12px; border-right: none; border-left: none;">{{ line.object.name }}</div>
+					</li>
+					{% for row in line.rows %}
+						<li class="row_basic"></li>
+					{% endfor %}
+				{% endfor %}
+			</ul>
+		</div>
+		<div id="inner_project_cal" class="rows_wrapper" style="overflow: auto; width: 100%;">
+		<div class="cal_today_line" style="margin-left: {{ project_cal.header.offset.today }}px"></div>
+			<ul style="width: {{ project_cal.dimensions.width }}px;">
+				<li class="row_basic">
+				{% for month in project_cal.header.month %}
+					<div class="cell cell_{{ month.days }}_month" style="line-height: 26px;">{{ month.date|date:"F" }}</div>
+				{% endfor %}
+				</li>
+				<li class="row_basic" style="margin-left: -{{ project_cal.header.offset.weeks }}px">
+				{% for week in project_cal.header.week %}
+						<div class="cell cell_7" style="line-height: 26px;">{{ week }}w</div>
+				{% endfor %}						
+				</li>
+				{% for line in project_cal.calendar %}
+					<li class="row_basic" style="background: none; opacity: 1; height: 18px;">
+						<div class="cell" style="width: 500px; background: none; opacity: 1; height: 18px; border-right: none; border-left: none;"></div>
+					</li>
+					{% for row in line.rows %}
+						<li class="row_basic">
+						{% for project in row %}
+							<div class="cell_active project_cal_cell" style="width: {{ project.days }}px; margin-left: {{ project.offset }}px;">
+								<a href="{% url 'plan:project' project.object.id 0 %}"><div style="position: relative; width: 100%; overflow: hidden; height: 26px;">{{ project.object.project.name }}</div></a>
+								<div class="project_cal_info_box bold">{{ project.object.name }}</br><span class="regular">{{ project.object.project.name }}</span></br>
+								<span class="light" style="font-size: 11px;">{{ project.object.start_date|date:"j F Y" }} - {{ project.object.end_date|date:"j F Y" }}</span>
+								</div>
+							</div>
+						{% endfor %}
+						</li>
+					{% endfor %}
+				{% endfor %}
+			</ul>
+		</div>
+	</div>
+</div>
+{% endif %}
+<h3 class="section_title">Tasks calendar</h3>
+<div class="cal_settings_wrapper">
+	<form class="cal_settings_form" action="{% url 'plan:staff' staff.id %}" method="post">
+	{% csrf_token %}
+		<input style="display: none" type="text" name="cal_setting" value="this_week" required/>
+		<input class="cal_setting {% if cal_setting == 'this_week' %}cal_set_chosen{% endif %}" type="submit" value="This Week" />
+	</form>
+	<form class="cal_settings_form" action="{% url 'plan:staff' staff.id %}" method="post">
+	{% csrf_token %}
+		<input style="display: none" type="text" name="cal_setting" value="this_month" required/>
+		<input class="cal_setting {% if cal_setting == 'this_month' %}cal_set_chosen{% endif %}" type="submit" value="This month" />
+	</form>
+	<form class="cal_settings_form" action="{% url 'plan:staff' staff.id %}" method="post">
+	{% csrf_token %}
+		<input style="display: none" type="text" name="cal_setting" value="last_month" required/>
+		<input class="cal_setting {% if cal_setting == 'last_month' %}cal_set_chosen{% endif %}" type="submit" value="Last month" />
+	</form>
+	<a href="{% url 'plan:calendar_staff' staff.id %}">
+	<div class="cal_settings_form" style="line-height: 30px;">
+		<div class="cal_setting regular">All</div>
+	</div>
+	</a>
+</div>
+{% for line in alt_cal %}
+<div class="calendar_outer_wrapper" style="height: {{ line.dimensions.height }}px;">
+	<div class="calendar_inner_wrapper">
+		<div class="row_title_wrapper">
+			<ul>
+				<li class="row_basic row_short" style="background-color: none;"></li>
+				<li class="row_basic row_short" style="background-color: none;"></li>
+				<li class="row_basic" style="height: 15px; font-size: 10px !important; background-color: none;"></li>
+				{% for cal in line.calendar %}
+					<li class="row_basic row_depart"><a href=#>{{ cal.section.name }}</a></li>
+					{% for row in cal.rows %}
+						<li class="row_basic"><a href="{% url 'plan:staff' row.object.id %}"><div class="staff_row_title">{{ row.object.name }}</div></a></li>
+					{% endfor %}
+				{% endfor %}
+			</ul>
+		</div>
+		<div class="rows_wrapper">
+			<ul>
+				<li class="row_basic row_short">
+				{% for m in line.header.month %}
+					<div class="cell cell_{{ m.num_days }} ">{{ m.date|date:"F"}}</div>
+				{% endfor %}
+				</li>			
+ 				<li class="row_basic row_short">
+ 				{% for d in line.header.dates %}
+ 					<div class="cell cell {% if d.weekday > 4 %}end_week{% endif %}">{{ d.day }}</div>
+ 				{% endfor %}
+				</li>
+				<li class="row_basic" style="height: 15px; font-size: 10px !important;">
+				{% for d in line.header.dates %}
+ 					<div class="cell cell {% if d.weekday > 4 %}end_week{% endif %}">{{ d|date:"D"}}</div>
+ 				{% endfor %}
+				</li>
+				{% for cal in line.calendar %}
+					<li class="row_basic row_depart"></li>
+					{% for row in cal.rows %}
+						<li class="row_basic">
+							{% for ent in row.entries %}
+								{% if ent.fill %}
+									{% if 0 not in ent.objects %}
+										{% if ent.multi %}
+										<div onclick="vistoggle(this)" class="cell cell_{{ ent.num_days }} cell_active cell_red">
+											<p class="task_title_box">{{ ent.multi }} tasks. Click</p>
+											<div class="hidden_cal_task_info">
+											{% for obj in ent.objects %}
+												<div class="cal_task_info">
+													<a href="{% url 'plan:task' obj.id 0 %}"><div class="bold hidden_cal_task_info_line" style="padding: 0 4px;">{{ obj.name }}</div></a>
+													<a href="{% url 'plan:project' obj.project.id 0 %}"><div class="regular hidden_cal_task_info_line" style="font-size: 12px; padding: 2px 4px 0 4px;">{{ obj.project.name }}</div></a>
+													<div class="light" style="font-size: 11px; padding: 3px 4px 0 4px;">{{ obj.start_date|date:"j M" }} - {{ obj.end_date|date:"j M" }}</div>
+													{% if obj.comment %}
+														<div class="light" style="font-size: 11px; padding: 2px 4px 2px 4px;">{{ obj.comment }}</div>
+													{% else %}
+														<div class="light" style="font-size: 11px; padding: 2px 4px 2px 4px;">No comments</div>
+													{% endif %}
+												</div>
+											{% endfor %}
+											</div>
+										</div>
+										{% else %}
+											<div onclick="vistoggle(this)" class="cell cell_{{ ent.num_days }} cell_active">
+												<p class="task_title_box">{{ ent.objects.0.project.name }}</p>
+												<div class="hidden_cal_task_info">
+													<div class="cal_task_info">
+														<a href="{% url 'plan:task' ent.objects.0.id 0 %}"><div class="bold hidden_cal_task_info_line" style="padding: 0 4px;">{{ ent.objects.0.name }}</div></a>
+														<a href="{% url 'plan:project' ent.objects.0.project.id 0 %}"><div class="regular hidden_cal_task_info_line" style="font-size: 12px; padding: 2px 4px 0 4px;">{{ ent.objects.0.project.name }}</div></a>
+														<div class="light" style="font-size: 11px; padding: 3px 4px 0 4px;">{{ ent.objects.0.start_date|date:"j M" }} - {{ ent.objects.0.end_date|date:"j M" }}</div>
+														{% if ent.objects.0.comment %}
+															<div class="light" style="font-size: 11px; padding: 2px 4px 2px 4px;">{{ ent.objects.0.comment }}</div>
+														{% else %}
+															<div class="light" style="font-size: 11px; padding: 2px 4px 2px 4px;">No comments</div>
+														{% endif %}
+													</div>
+												</div>
+											</div>
+										{% endif %}
+									{% else %}
+										<div class="cell cell_{{ ent.num_days }} end_week"></div>
+									{% endif %}
+								{% else %}
+									<div class="cell"></div>
+								{% endif %}
+							{% endfor %}
+						</li>
+					{% endfor %}
+				{% endfor %}
+			</ul>
+		</div>
+	</div>
+</div>
+{% endfor %}
+
+<div class="lists_wrapper">
+	<div class="list">
+		<h3>Active Projects:</h3>
+		{% if project_list %}
+		<ul>
+			{% for stream in project_list %}
+			<li class="bottom_list_title bold">{{ stream.name }}</li>
+				{% for project in stream.projects %}
+					<li><a class="bottom_list_link" href="{% url 'plan:project' project.id 0 %}">{{ project.name }}</a></li>
+				{% endfor %}
+			{% endfor %}
+		</ul>
+	</div>
+	<div class="list">
+		{% endif %}
+		<h3>Staff:</h3>
+		{% if staff_list %}
+		<ul>
+			{% for dep in staff_list %}
+			<li class="bottom_list_title bold">{{ dep.name }}</li>
+				{% for staff in dep.staff %}
+					<li><a class="bottom_list_link" href="{% url 'plan:staff' staff.id %}">{{ staff.name }}</a></li>
+				{% endfor %}
+			{% endfor %}
+		</ul>
+		{% endif %}
+	</div>
+</div>
+
+<script>
+function vistoggle(t) {
+	event.stopPropagation();
+	t.classList.toggle('visible');
+}
+
+b = document.getElementsByTagName("BODY")[0];
+b.addEventListener("click", function(){
+	var x = document.getElementsByClassName("visible");
+	var num = x.length;
+	for (i = 0; i < num; i++) {
+    	x[0].classList.toggle('visible');
+	}
+});
+(function() {
+	document.getElementById("inner_project_cal").scrollLeft = {{ project_cal.header.offset.calendar }}
+})();
+</script>

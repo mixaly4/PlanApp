@@ -1,0 +1,184 @@
+<!--setup = {'lines_num' : 0, 'rows': 0, 'row_names': 0, 'lines': [], 'project': 0, 'project_start': 0, 'project_end': 0, 'tasks_list': tasks_list,}-->
+
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'plan/style.css' %}"/>
+<div class="header">
+	<div class="header_logo">
+		<a href="{% url 'plan:index' %}"><img class="logo" src="{% static 'plan/images/logo_uma.png' %}"/></a>
+		<div class="logo_text">Planning</div>
+	</div>
+	<div class="header_logo">
+		<div class="header_title">Projects</div>
+		<ul class="header_dropbox">
+			{% if project_list %}
+				{% for project in project_list %}
+					<li><a href="{% url 'plan:project' project.id 0 %}">{{ project.name }}</a></li>
+				{% endfor %}
+			{% endif %}
+		</ul>
+	</div>
+	<div class="header_logo">
+		<div class="header_title">Staff</div>
+		<ul class="header_dropbox">
+			{% if staff_list %}
+				{% for staff in staff_list %}
+					<li><a href="{% url 'plan:staff' staff.id %}">{{ staff.name }}</a></li>
+				{% endfor %}
+			{% endif %}
+		</ul>
+	</div>
+	<div class="header_logo header_create">
+		<div class="header_title"><a href="{% url 'plan:create_project' %}">Create Project</a></div>
+	</div>
+	<div class="header_logo header_create">
+		<div class="header_title"><a href="{% url 'plan:create_task' 0 0 %}">Create Task</a></div>
+	</div>
+</div>
+<h2>{{ staff.name }}</h2>
+<div class="header">
+	<div class="header_logo header_create">
+		<div class="header_title"><a href="{% url 'plan:create_task' 0 staff.id %}">Create new task</a></div>
+	</div>
+</div>
+{% if task_count %}
+<div class="cal_settings_wrapper">
+	<form class="cal_settings_form" action="{% url 'plan:staff' staff.id %}" method="post">
+	{% csrf_token %}
+		<input style="display: none" type="text" name="cal_setting" value="this_week" required/>
+		<input class="cal_setting {% if cal_setting == 'this_week' %}cal_set_chosen{% endif %}" type="submit" value="This Week" />
+	</form>
+	<form class="cal_settings_form" action="{% url 'plan:staff' staff.id %}" method="post">
+	{% csrf_token %}
+		<input style="display: none" type="text" name="cal_setting" value="this_month" required/>
+		<input class="cal_setting {% if cal_setting == 'this_month' %}cal_set_chosen{% endif %}" type="submit" value="This month" />
+	</form>
+	<form class="cal_settings_form" action="{% url 'plan:staff' staff.id %}" method="post">
+	{% csrf_token %}
+		<input style="display: none" type="text" name="cal_setting" value="last_month" required/>
+		<input class="cal_setting {% if cal_setting == 'last_month' %}cal_set_chosen{% endif %}" type="submit" value="Last month" />
+	</form>
+	<form class="cal_settings_form" action="{% url 'plan:staff' staff.id %}" method="post">
+	{% csrf_token %}
+		<input style="display: none" type="text" name="cal_setting" value="all" required/>
+		<input class="cal_setting {% if cal_setting == 'all' %}cal_set_chosen{% endif %}" type="submit" value="All" />
+	</form>
+</div>
+{% for line in lines %}
+<div class="calendar_outer_wrapper" style="height: {{ rows }}px;">
+	<div class="calendar_inner_wrapper">
+		<div class="row_title_wrapper">
+			<ul>
+				<li class="row_basic">Date</li>
+				<li class="row_basic">Week day</li>
+				{% for name in row_names %}
+					<li class="row_basic"><a href="{% url 'plan:project' name.1 0 %}">{{ name.0 }}</a></li>
+				{% endfor %}
+			</ul>
+		</div>
+		<div class="rows_wrapper">
+			<ul>
+				<li class="row_basic">
+					{% for date in line.dates %}
+						<div class="cell {% if date.1 > 4 %} end_week{% endif %}"> {{ date.0.day }}/{{ date.0.month }}</div>
+					{% endfor %}
+				</li>
+				<li class="row_basic">
+					{% for day in line.days %}
+						<div class="cell {% if day == 'S' %} end_week{% endif %}"> {{ day }}</div>
+					{% endfor %}
+				</li>
+				{% for row in line.rows %}
+					<li class="row_basic">
+						{% for cell in row %}
+						{% if 0 not in cell.tasks %}
+							<div onclick="vistoggle(this)" class="cell {% if cell.days %} cell_{{ cell.days }} cell_active {% if cell.multi %} cell_red "><p>{{ cell.multi }} click for info</p>
+							<div class="hidden_cal_task_info">
+								{% for t in cell.tasks %}
+								<div class="cal_task_info">
+									<div><a href="{% url 'plan:task' t.id 0 %}"><strong>{{ t.name }}</strong></a></div>
+									<div>From <strong>{{ t.start_date }}</strong> till <strong>{{ t.end_date }}</strong></div>
+									{% if t.comment %}
+									<div>{{ t.comment }}</div>
+									{% else %}
+									<div>No comments</div>
+									{% endif %}
+								</div>
+								{% endfor %}
+							</div>
+							{% else %}"><p>{{ cell.tasks.0.name }}</p>
+							<div class="hidden_cal_task_info">
+								<div class="cal_task_info">
+									<div><a href="{% url 'plan:task' cell.tasks.0.id 0 %}"><strong>{{ cell.tasks.0.name }}</strong></a></div>
+									<div>From <strong>{{ cell.tasks.0.start_date }}</strong> till <strong>{{ cell.tasks.0.end_date }}</strong></div>
+									{% if cell.tasks.0.comment %}
+									<div>{{ cell.tasks.0.comment }}</div>
+									{% else %}
+									<div>No comments</div>
+									{% endif %}
+								</div>
+							</div>
+							{% endif %}{% else %}">{% endif %}</div>
+						{% else %}
+							<div class="cell {% if cell.days %} cell_{{ cell.days }} end_week {% endif %}"></div>
+						{% endif %}
+						{% endfor %}
+					</li>
+				{% endfor %}
+			</ul>
+		</div>
+	</div>
+</div>
+{% endfor %}
+{% endif %}
+
+{% if task_count %}
+{% for t in task_count %}
+<p><a href="{% url 'plan:project' t.project.id 0 %}"><strong>{{ t.project.name }}</strong></a></p>
+{% for i in t.tasks %}
+	<div style="position: relative; margin: 5px 0">
+		<div style="float: left; margin-right: 7px;">{{ forloop.counter }} <a href="{% url 'plan:task' i.id 0 %}" style="padding-right: 10px;">{{ i.name }}</a>: {{ i.start_date }} - {{ i.end_date }}</div>
+		<a href="{% url 'plan:edit_task' i.id 0 0 %}" style="float: left; padding-left: 10px;"> EDIT </a>
+	</div>
+	</br>
+{% endfor %}
+{% endfor %}
+{% endif %}
+
+<div class="lists_wrapper">
+	<div class="list">
+		<h3>Active Projects:</h3>
+		{% if project_list %}
+		<ul>
+			{% for project in project_list %}
+			<li><a href="{% url 'plan:project' project.id 0 %}">{{ project.name }}</a></li>
+			{% endfor %}
+		</ul>
+	</div>
+	<div class="list">
+		{% endif %}
+		<h3>Staff:</h3>
+		{% if staff_list %}
+		<ul>
+			{% for staff in staff_list %}
+			<li><a href="{% url 'plan:staff' staff.id %}">{{ staff.name }}</a></li>
+			{% endfor %}
+		</ul>
+		{% endif %}
+	</div>
+</div>
+
+<script>
+function vistoggle(t) {
+	event.stopPropagation();
+	t.classList.toggle('visible');
+}
+
+b = document.getElementsByTagName("BODY")[0];
+b.addEventListener("click", function(){
+	var x = document.getElementsByClassName("visible");
+	var num = x.length;
+	for (i = 0; i < num; i++) {
+    	x[0].classList.toggle('visible');
+	}
+});
+</script>

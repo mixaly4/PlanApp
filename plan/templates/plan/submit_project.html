@@ -1,0 +1,16 @@
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'plan/style.css' %}"/>
+
+<h2>New Project "{{ project.name }}" has been successfully created!</h2>
+
+<p><a href="{% url 'plan:create_task' %}">Create tasks for project "{{ project.name }}"</a></p>
+<p><a href="{% url 'plan:create_project' %}">Edit project "{{ project.name }}"</a></p>
+<p><a href="{% url 'plan:create_project' %}">Create another project</a></p>
+
+<form action="{% url 'plan:submit_project' %}" method="post">
+{% csrf_token %}
+<input type="text" name="name" placeholder="project title"/>
+<br />
+<br />
+<input type="submit" value="Create Project" />
+</form>

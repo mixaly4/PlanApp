@@ -1,0 +1,129 @@
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'plan/style.css' %}"/>
+<link rel="stylesheet" type="text/css" href="{% static 'plan/style2.css' %}"/>
+<div id="delete_window">
+	<div class="delete_wrapper">
+		<form action="{% url 'plan:delete_task' %}" method="post">
+		<input style="display: none" type="text" name="name" value="{{ task.name }}"/>
+		<input style="display: none" type="text" name="edit" value="{{ task.id }}"required/>
+		<input style="display: none" type="text" name="timestamp" value="{{ timestamp }}" required/>
+		<input style="display: none" type="text" name="delete" value="{{ task.id }}"required/>
+		{% csrf_token %}
+		<div class="regular" style="width: 100%; text-align: center; font-size: 15px;">Are you sure you would like to delete </br><span class="bold">'{{ task.name }}'</span></br> task in '{{ task.project.name }}' project?</div>
+		<div class="header" style="width: 180px; left: 48px; margin-top: 30px; margin-bottom: 20px;">
+			<div class="header_logo header_menu header_create" style="width: 60px; margin-right: 60px;" onclick="getElementById('delete_window').style.display='none'">
+				<div class="header_title">NO</div>
+			</div>
+			<div class="header_logo header_menu header_delete" style="width: 60px; margin: 0; padding: 0;">
+				<input class="header_title button" type="submit" value="YES" />
+			</div>
+		</div>
+		</form>
+	</div>
+</div>
+{% if time == 1 %}
+<div id="time_message_wrapper">
+	<div class="time_message">
+		<div>The changes to the task <strong>'{{ task.name }}'</strong> were <strong>not</strong> saved as another user made changes to the task while you were editing it.</div>
+		<p><a href="{% url 'plan:edit_task' task.id 0 0 %}"><strong>Try editing again</strong></a></p>
+		<p onclick="getElementById('time_message_wrapper').style.display='none'"><strong>Close</strong></p>
+	</div>
+</div>
+{% endif %}
+<div class="header">
+	<div class="header_logo">
+		<a href="{% url 'plan:index' %}"><img class="logo" src="{% static 'plan/images/logo_uma.png' %}"/></a>
+		<div class="logo_text bold">Planning</div>
+	</div>
+	<div class="header_logo header_menu">
+		<div class="header_title regular">Projects</div>
+		<ul class="header_dropbox">
+			{% if project_list %}
+				{% for stream in project_list %}
+					<li class="header_dropbox_titlerow regular">{{ stream.name }}</li>
+					{% for project in stream.projects %}
+						<a href="{% url 'plan:project' project.id 0 %}"><li class="header_dropbox_row">{{ project.name }}</li></a>
+					{% endfor %}
+				{% endfor %}
+			{% endif %}
+		</ul>
+	</div>
+	<div class="header_logo header_menu" style="margin-right: 70px;">
+		<div class="header_title regular">Staff</div>
+		<ul class="header_dropbox">
+			{% if staff_list %}
+				{% for dep in staff_list %}
+					<li class="header_dropbox_titlerow regular">{{ dep.name }}</li>
+					{% for staff in dep.staff %}
+						<a href="{% url 'plan:staff' staff.id %}"><li class="header_dropbox_row">{{ staff.name }}</li></a>
+					{% endfor %}
+				{% endfor %}
+			{% endif %}
+		</ul>
+	</div>
+	<a href="{% url 'plan:create_project' %}">
+		<div class="header_logo header_menu header_create">
+			<div class="header_title regular">Create Project</div>
+		</div>
+	</a>
+	<a href="{% url 'plan:create_task' 0 0 %}">
+		<div class="header_logo header_menu header_create" style="margin-right: 70px;">
+			<div class="header_title regular">Create Task</div>
+		</div>
+	</a>
+	<div class="header_logo header_date">
+		<div class="logo_text bold">{{ today|date:"j F Y" }}</div>
+	</div>
+</div>
+<div class="page_object_header" style="border-color: #660066;">
+	<h3 class="bold page_object_header_section"><a class="link_underline" href="{% url 'plan:staff' task.staff.id %}">{{ task.staff }}</a></h3>
+	<h1 class="bold page_object_header_section">{{ task.name }}</h1>
+	<h3 class="bold page_object_header_section"><a class="link_underline" href="{% url 'plan:project' task.project.id 0 %}">{{ task.project }}</a></h3>
+</div>
+<div class="header object_page_header">
+	<a href="{% url 'plan:edit_task' task.id task.project.id task.staff.id %}">
+		<div class="header_logo header_edit" style="width: 150px; margin-right: 15px;">
+			<div class="header_title">Edit this task</div>
+		</div>
+	</a>
+	<div class="header_logo header_delete" style="width: 150px;" onclick="getElementById('delete_window').style.display='block'">
+		<div class="header_title">Delete this task</div>
+	</div>
+	<div class="header_comment">
+		<h3>{{ task.start_date|date:"j F Y" }} - {{ task.end_date|date:"j F Y" }}: {{ days }} day{% if days > 1 %}s{% endif %}</h3>
+		</br>
+		{% if task.comment %}
+			<h3 class="light">{{ task.comment }}</h3>
+		{% else %}
+			<h3 class="light">No comment to this task</h3>
+		{% endif %}
+	</div>
+</div>
+<div class="lists_wrapper">
+	<div class="list">
+		<h3>Active Projects:</h3>
+		{% if project_list %}
+		<ul>
+			{% for stream in project_list %}
+			<li class="bottom_list_title bold">{{ stream.name }}</li>
+				{% for project in stream.projects %}
+					<li><a class="bottom_list_link" href="{% url 'plan:project' project.id 0 %}">{{ project.name }}</a></li>
+				{% endfor %}
+			{% endfor %}
+		</ul>
+	</div>
+	<div class="list">
+		{% endif %}
+		<h3>Staff:</h3>
+		{% if staff_list %}
+		<ul>
+			{% for dep in staff_list %}
+			<li class="bottom_list_title bold">{{ dep.name }}</li>
+				{% for staff in dep.staff %}
+					<li><a class="bottom_list_link" href="{% url 'plan:staff' staff.id %}">{{ staff.name }}</a></li>
+				{% endfor %}
+			{% endfor %}
+		</ul>
+		{% endif %}
+	</div>
+</div>

@@ -1,0 +1,217 @@
+{% load static %}
+<link rel="stylesheet" type="text/css" href="{% static 'plan/style.css' %}"/>
+<link rel="stylesheet" type="text/css" href="{% static 'plan/style2.css' %}"/>
+{% if edit and selected.project%}
+<div id="delete_window">
+	<div class="delete_wrapper">
+		<form action="{% url 'plan:delete_project' %}" method="post">
+		{% csrf_token %}
+		<input style="display: none" type="text" name="name" value="{{ selected.project.name }}"/>
+		<input style="display: none" type="text" name="edit" value="{{ selected.project.id }}"required/>
+		<input style="display: none" type="text" name="delete" value="{{ selected.project.id }}"required/>
+		<input style="display: none" type="text" name="timestamp" value="{{ timestamp }}" required/>
+		<div class="regular" style="width: 100%; text-align: center; font-size: 15px;">
+			<span class="bold">All {{ selected.task_num }} tasks</span> in the <span class="bold">{{ selected.project.name }}</span> will also be deleted.</br></br>Are you sure you would like to delete this project?</div>
+		<div class="header" style="width: 180px; left: 48px; margin-top: 30px; margin-bottom: 20px;">
+			<div class="header_logo header_menu header_create" style="width: 60px; margin-right: 60px;" onclick="getElementById('delete_window').style.display='none'">
+				<div class="header_title">NO</div>
+			</div>
+			<div class="header_logo header_menu header_delete" style="width: 60px; margin: 0; padding: 0;">
+				<input class="header_title button" type="submit" value="YES" />
+			</div>
+		</div>
+		</form>
+	</div>
+</div>
+{% endif %}
+<div class="header">
+	<div class="header_logo">
+		<a href="{% url 'plan:index' %}"><img class="logo" src="{% static 'plan/images/logo_uma.png' %}"/></a>
+		<div class="logo_text bold">Planning</div>
+	</div>
+	<div class="header_logo header_menu">
+		<div class="header_title regular">Projects</div>
+		<ul class="header_dropbox">
+			{% if project_list %}
+				{% for stream in project_list %}
+					<li class="header_dropbox_titlerow regular">{{ stream.name }}</li>
+					{% for project in stream.projects %}
+						<a href="{% url 'plan:project' project.id 0 %}"><li class="header_dropbox_row">{{ project.name }}</li></a>
+					{% endfor %}
+				{% endfor %}
+			{% endif %}
+		</ul>
+	</div>
+	<div class="header_logo header_menu" style="margin-right: 70px;">
+		<div class="header_title regular">Staff</div>
+		<ul class="header_dropbox">
+			{% if staff_list %}
+				{% for dep in staff_list %}
+					<li class="header_dropbox_titlerow regular">{{ dep.name }}</li>
+					{% for staff in dep.staff %}
+						<a href="{% url 'plan:staff' staff.id %}"><li class="header_dropbox_row">{{ staff.name }}</li></a>
+					{% endfor %}
+				{% endfor %}
+			{% endif %}
+		</ul>
+	</div>
+	<a href="{% url 'plan:create_project' %}">
+		<div class="header_logo header_menu header_create">
+			<div class="header_title regular">Create Project</div>
+		</div>
+	</a>
+	<a href="{% url 'plan:create_task' 0 0 %}">
+		<div class="header_logo header_menu header_create" style="margin-right: 70px;">
+			<div class="header_title regular">Create Task</div>
+		</div>
+	</a>
+	<div class="header_logo header_date">
+		<div class="logo_text bold">{{ today|date:"j F Y" }}</div>
+	</div>
+</div>
+<div class="page_object_header" style="border-color: #12bb2a;">
+	<h3 class="bold page_object_header_section"></h3>
+	<h1 class="bold page_object_header_section">{% if edit %}Edit Project{% else %}Create New Project{% endif %}</h1>
+	<h3 class="bold page_object_header_section"></h3>
+</div>
+{% if errors.error %}
+<div class="input_warning_box">
+    <div class="input_warning_box_title bold">Warning! Data was not saved!</div>
+	{% for error in errors.texts %}
+		{% if error.text %}
+		<ul>
+	        <li class="regular" style="margin-top: 5px;">{{ error.location }}:</li>
+	        {% for t in error.text %}
+	        	<li class="light">{{ t }}</li>
+	        {% endfor %}
+	    </ul>
+	    {% endif %}
+	{% endfor %}
+</div>
+{% endif %}
+
+<form action="{% url 'plan:submit_project' %}" method="post">
+{% csrf_token %}
+<div class="form_section">
+	<input class="form_style{% if errors.name %} input_error{% endif %}" type="text" name="name" placeholder="project title" {% if selected.name %}value="{{ selected.name }}"{% endif %}/>
+	</br>
+	</br>
+	{% if stream_list %}
+	<select class="form_style{% if errors.stream %} input_error{% endif %}" id="st_select" name="stream" required >
+		{% if not edit and not selected.stream %}
+		<option value="0">Select stream</option>
+		{% endif %}
+		{% for stream in stream_list %}
+			<option value="{{ stream.id }}" {% if selected.stream and selected.stream.id == stream.id %}selected="selected"{% endif %}>{{ stream.name }}</option>
+		{% endfor %}
+	</select>
+	{% endif %}
+</div>
+<div class="form_section">
+{% if not selected.project.tasks %}
+	<div class="form_style_date_title">Select start date:</div>
+	<select class="form_style form_style_date{% if errors.start_date %} input_error{% endif %}" name="start_date_day" required>
+		<option>Date</option>
+		{% for d in date.dates %}
+			<option value="{{ d }}" {% if selected.start_date.day == d %}selected="selected"{% endif %}>{{ d }}</option>
+		{% endfor %}
+	</select>
+	<select class="form_style form_style_date{% if errors.start_date %} input_error{% endif %}" name="start_date_month" required>
+		<option>Month</option>
+		{% for m in date.months %}
+			<option value="{{ m.num }}" {% if selected.start_date.month == m.num %}selected="selected"{% elif not selected.start_date.month and today.month == m.num %}selected="selected"{% endif %}>{{ m.str }}</option>
+		{% endfor %}
+	</select>
+	<select class="form_style form_style_date{% if errors.start_date %} input_error{% endif %}" name="start_date_year" required>
+		<option>Year</option>
+		{% for y in date.years %}
+			<option value="{{ y }}" {% if selected.start_date.year == y %}selected="selected"{% elif not selected.start_date.year and today.year == y %}selected="selected"{% endif %}>{{ y }}</option>
+		{% endfor %}
+	</select>
+	<br />
+	<div class="form_style_date_title">Select end date:</div>
+	<select class="form_style form_style_date{% if errors.end_date %} input_error{% endif %}" name="end_date_day" required>
+		<option>Date</option>
+		{% for d in date.dates %}
+			<option value="{{ d }}" {% if selected.end_date.day == d %}selected="selected"{% endif %}>{{ d }}</option>
+		{% endfor %}
+	</select>
+	<select class="form_style form_style_date{% if errors.end_date %} input_error{% endif %}" name="end_date_month" required>
+		<option>Month</option>
+		{% for m in date.months %}
+			<option value="{{ m.num }}" {% if selected.end_date.month == m.num %}selected="selected"{% elif not selected.end_date.month and today.month == m.num %}selected="selected"{% endif %}>{{ m.str }}</option>
+		{% endfor %}
+	</select>
+	<select class="form_style form_style_date{% if errors.end_date %} input_error{% endif %}" name="end_date_year" required>
+		<option>Year</option>
+		{% for y in date.years %}
+			<option value="{{ y }}" {% if selected.end_date.year == y %}selected="selected"{% elif not selected.end_date.year and today.year == y %}selected="selected"{% endif %}>{{ y }}</option>
+		{% endfor %}
+	</select>
+	<br />
+	<br />
+{% elif selected.project.tasks %}
+	<div class="form_style_date_title light">Project dates based on active tasks</div>
+	<div class="form_style_date_title">Start date:</div>
+	<div class="form_style_date_title bold">{{ selected.project.start|date:"j F Y" }}</div>
+	<div class="form_style_date_title">End date:</div>
+	<div class="form_style_date_title bold">{{ selected.project.end|date:"j F Y" }}</div>
+{% endif %}
+</div>
+<div class="form_section">
+	<textarea class="form_style form_style_textarea{% if errors.comment %} input_error{% endif %}" rows=5 cols=30 name="comment" placeholder="Project description (not required)">{% if selected.comment != null %}{{ selected.comment }}{% endif %}</textarea>
+</div>
+<br/>
+<br/>
+<input style="display: none" type="text" name="edit" {% if edit and selected.project %}value="{{ selected.project.id }}"{% else %}value="0" {% endif %}required/>
+<input style="display: none" type="text" name="timestamp" {% if edit and selected.project %}value="{{ timestamp }}"{% else %}value="0" {% endif %}required/>
+
+<div class="header" style="clear: both; height: auto; overflow: hidden;">
+	<div class="button_wrap" style="{% if edit and selected.project %}width: 500px; margin-left: -250px;{% else %}width: 152px; margin-left: -61px;{% endif %}">
+		<div class="header_logo header_menu header_create" style="padding: 0;">
+			<input class="header_title regular button" type="submit" value="{% if edit %}Save {% else %}Create {% endif %}Project" />
+		</div>
+		{% if edit and selected.project %}
+			<a href="{% url 'plan:project' selected.project.id 0 %}">
+				<div class="header_logo header_menu header_edit">
+					<div class="header_title regular button">Cancel</div>
+				</div>
+			</a>
+			<div class="header_logo header_menu header_delete" onclick="getElementById('delete_window').style.display='block'">
+				<div class="header_title regular">Delete Project</div>
+			</div>
+		{% endif %}
+	</div>
+</div>
+
+</form>
+
+
+<div class="lists_wrapper">
+	<div class="list">
+		<h3>Active Projects:</h3>
+		{% if project_list %}
+		<ul>
+			{% for stream in project_list %}
+			<li class="bottom_list_title bold">{{ stream.name }}</li>
+				{% for project in stream.projects %}
+					<li><a class="bottom_list_link" href="{% url 'plan:project' project.id 0 %}">{{ project.name }}</a></li>
+				{% endfor %}
+			{% endfor %}
+		</ul>
+	</div>
+	<div class="list">
+		{% endif %}
+		<h3>Staff:</h3>
+		{% if staff_list %}
+		<ul>
+			{% for dep in staff_list %}
+			<li class="bottom_list_title bold">{{ dep.name }}</li>
+				{% for staff in dep.staff %}
+					<li><a class="bottom_list_link" href="{% url 'plan:staff' staff.id %}">{{ staff.name }}</a></li>
+				{% endfor %}
+			{% endfor %}
+		</ul>
+		{% endif %}
+	</div>
+</div>
