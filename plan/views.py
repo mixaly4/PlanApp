@@ -12,7 +12,7 @@ from .gen_cal import get_week_tasks_context, get_lines_tasks_context
 from .gen_cal import get_date_selection
 from .gen_cal import ProjectDates
 from .gen_cal import SetCal
-from .plan_function import calendar_context, project_calendar_context, dashboard_context, project_task_dates
+from .plan_function import calendar_context, project_calendar_context, dashboard_context, project_task_dates, week_start, week_end
 
 from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponseRedirect, HttpResponse, Http404
@@ -30,7 +30,7 @@ def index(request):
 		cal_setting = 'this_week'
 	else:
 		cal_setting = request.POST['cal_setting']
-	
+
 	context = {'today': datetime.date.today(), 
 				'dashboard': dashboard_context(show_empty = True, group_dash = 'department'), 
 				'alt_cal': calendar_context(start = cal_setting, days_in_line = 35, num_lines = 2, obj = False, obj_id = False, group = 'department', row = 'staff', show_empty = True), 
@@ -41,7 +41,7 @@ def index(request):
 	return render(request, 'plan/index.html', context)
 
 def project(request, project_id, time):
-	project_task_dates()
+	#project_task_dates()
 	try:
 		project = Project.objects.get(pk=project_id)
 	except (KeyError, Project.DoesNotExist):
@@ -62,40 +62,8 @@ def project(request, project_id, time):
 					'staff_list' : Department.objects.all(), 
 					'project_list': Stream.objects.all(), 
 					'cal_setting': cal_setting,
-					'calendar': calendar_context(start = 'all', num_lines = 1, obj = project, obj_id = project.id, group = 'department', row = 'task', show_empty = False, project = project),}
+					'calendar': calendar_context(start = 'all', days_in_line = int((week_end(project.end()) - week_start(project.start())) / datetime.timedelta(days=1) + 1), num_lines = 1, obj = project, obj_id = project.id, group = 'department', row = 'task', show_empty = False, project = project),}
 		return render(request, 'plan/project.html', context)
-
-def old_project(request, project_id, time):
-	project_task_dates()
-	staff_list = Staff.objects.all()
-	project_list = Project.objects.all()
-	p = Project.objects.get(pk=project_id)
-	n = p.task_set.all().count()
-	if n > 0:
-		lines = int(math.ceil((p.task_end_date - p.task_start_date) / datetime.timedelta(days=1) / 35.0))
-		day = int((p.task_end_date - p.task_start_date) / datetime.timedelta(days=1) + 1.0)
-		s = SetCal(datetime.date.today())
-		try:
-			cal_setting = request.POST['cal_setting']
-		except KeyError:
-			cal_setting = 'this_week'
-		else:
-			cal_setting = request.POST['cal_setting']
-		#data = get_project_context(project_id, start=s.start(cal_setting))
-		p_data = get_project_tasks(project_id)
-		context = {'staff_list' : staff_list, 
-					'project_list': project_list, 
-					'project': p, 
-					'task_cal': get_week_tasks_context(start = p.task_start_date, day = day, project=p.id, staff=False, row='task'),
-					'calendar': get_lines_tasks_context(setting = cal_setting, lines = lines, project=project_id, staff=False),
-					'time': int(time),
-					'cal_setting': cal_setting,
-					'p_cal': p_data,
-					'today': datetime.date.today(),
-					}
-	else:
-		context = {'today': datetime.date.today(), 'staff_list' : staff_list, 'project_list': project_list, 'project': p, 'time': int(time),}
-	return render(request, 'plan/project_old.html', context)
 
 def task(request, task_id, time):
 	task = Task.objects.get(pk=task_id)
